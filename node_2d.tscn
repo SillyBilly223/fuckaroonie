@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c0nfleu0tfmik"]
+
+[ext_resource type="Script" uid="uid://dnqkc00roik4l" path="res://Scripts/game_manager.gd" id="1_0e48y"]
+[ext_resource type="Script" uid="uid://psh22udfkcii" path="res://Scripts/Grid/grid_manager.gd" id="1_wtcfe"]
+
+[node name="GameManager" type="Node2D" unique_id=1623047277 node_paths=PackedStringArray("grid_manager")]
+script = ExtResource("1_0e48y")
+grid_manager = NodePath("GridManager")
+
+[node name="Timer" type="Timer" parent="." unique_id=2134169253]
+
+[node name="GridManager" type="Node2D" parent="." unique_id=1838360769]
+script = ExtResource("1_wtcfe")
