@@ -28,5 +28,3 @@ func _process(delta: float) -> void:
 
 func simulation_tick():
 	gas_network.on_simulation_tick()
-	
-	

@@ -32,17 +32,24 @@ func remove_object(tile : Vector2i, is_input : bool):
 func add_pipe(pipe : GasPipe):
 	pipe.network_id = network_id
 	pipes[pipe.tile] = pipe
+	
 	if pipe.contents:
-		active_pipes.append(pipe)
+		set_active_pipe(pipe)
 
 func remove_pipe(pipe : GasPipe):
 	pipe.network_id = network_id
 	
 	if pipes.has(pipe.tile):
+		
 		pipes.erase(pipe.tile)
 		
-		if active_pipes.has(pipe): 
-			active_pipes.erase(pipe)
+		remove_active_pipe(pipe)
+
+func set_active_pipe(pipe : GasPipe):
+	if not active_pipes.has(pipe) and not pipe.is_empty(): active_pipes.append(pipe)
+
+func remove_active_pipe(pipe : GasPipe):
+	if active_pipes.has(pipe): active_pipes.erase(pipe)
 
 func combine_network(a_network : GasNetwork):
 	
@@ -63,21 +70,14 @@ func remove_network(a_network : GasNetwork):
 ## Simulate
 
 func simulate_objects():
-	pass
+	if object_input.is_empty() and object_output.is_empty(): return
+	
+	Simulate_PipeTransfer.simulate_network_objects(self)
 
 func simulate_pipes():
 	if active_pipes.is_empty(): return
 	
-	for pipe : GasPipe in active_pipes:
-		if pipe.travel_direction == Utils.DIR_BIT.NONE:
-			continue
-		
-		if pipe.can_move():
-			var dir : Vector2 = pipe.tile + Utils.bit_dir_to_tile_dir(pipe.travel_direction)
-			
-			var move_pipe : GasPipe = pipes.get(dir)
-			
-			pass
+	Simulate_PipeTransfer.simulate_network_pipes(self)
 
 ## Misc
 

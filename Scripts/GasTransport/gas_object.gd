@@ -6,9 +6,10 @@ var tile := Vector2i.ZERO
 var size := Vector2i.ONE
 
 var rotation : int
+var transfer_amount: float
 
 var inputs : Dictionary[Vector2i,GasContent]
-var outputs : Array[Vector2i]
+var outputs : Dictionary[Vector2i,GasContent]
 
 var has_input: bool :
 	get: return inputs.size() > 0

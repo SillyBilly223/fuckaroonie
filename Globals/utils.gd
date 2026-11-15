@@ -1,6 +1,6 @@
 class_name Utils
 
-const SIMULATION_TICK = 40
+const SIMULATION_TICK = 80
 
 enum DIR_BIT {
 	LEFT = 1<<0,
@@ -30,6 +30,20 @@ static func get_adjacency_dir(a : Vector2i, b : Vector2i) -> DIR_BIT:
 	
 	if index == -1: return DIR_BIT.NONE
 	return 1<<index as DIR_BIT
+
+static func is_opposing_dir(a : DIR_BIT, b : DIR_BIT) -> bool:
+	return flip_bit_dir(a) == b
+
+static func is_ahead(dir : DIR_BIT, a : Vector2i, b : Vector2i) -> bool:
+	var dir_vec := bit_dir_to_tile_dir(dir)
+	a *= dir_vec; b *= dir_vec
+	
+	return a.x > b.x or a.y > b.y
+
+static func is_pushing(dir : DIR_BIT, a : Vector2i, b : Vector2i) -> bool:
+	var adj_dir = get_adjacency_dir(a,b)
+	print("dir:",bit_dir_to_debug(dir),"adj_dir",bit_dir_to_debug(adj_dir))
+	return adj_dir == dir
 
 static func rotation_bit_dir_restrict(rotation : int) -> int:
 	match rotation:
