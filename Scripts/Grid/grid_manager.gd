@@ -47,17 +47,21 @@ func _pipes_debug():
 		
 		for dir in Utils.DIR_BIT.values():
 			if pipe.connections & dir:
-				var pivot := Utils.bit_dir_to_tile_dir(dir)
+				var pivot := Utils.b_dir_to_t_dir(dir)
 				
 				draw_rect(Rect2(pos + (pivot * 7), gsiz), color, true)
 		
 		var font : Font = ThemeDB.fallback_font
 		var pipe_text = ""
 		##pipe_text = '' if not pipe.current_contents else pipe.current_contents.total_contents()
-		pipe_text = Utils.bit_dir_to_debug(pipe.travel_direction)
-		pipe_text += "s" if pipe.stagnant else ''
+		##for dir in Utils.DIR_BIT.values():
+		##	if pipe.connections & dir:
+		##		pipe_text += Utils.bit_dir_to_debug(dir)
+		pipe_text = pipe.network_id
+		##pipe_text = Utils.bit_dir_to_debug(pipe.travel_direction)
+		##pipe_text += "s" if pipe.stagnant else ''
 		draw_string(font, Vector2i(pos.x + 0, pos.y + 28), 
-		str(pipe_text), 0, -1, 32, Color.WHITE)
+		str(pipe_text), 0, -1, 28, Color.WHITE)
 	
 	if debug_place == 0:
 		var psiz := GridUtils.GRID_TILE_VEC * 0.7
@@ -70,8 +74,8 @@ func _pipes_debug():
 		draw_rect(Rect2(p_pos, psiz), Color.BLUE, true)
 		
 		for dir in Utils.DIR_BIT.values():
-			if adj & dir and (dir & no_connect != 0) :
-				var pivot := Utils.bit_dir_to_tile_dir(dir)
+			if adj & dir and (dir & no_connect == 0) :
+				var pivot := Utils.b_dir_to_t_dir(dir)
 				
 				draw_rect(Rect2(p_pos + (pivot * 7), psiz), Color.BLUE, true)
 

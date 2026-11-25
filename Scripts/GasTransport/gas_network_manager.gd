@@ -20,7 +20,7 @@ func remove_network(network : GasNetwork):
 	networks.erase(network.network_id)
 
 func insert_pipe_to_local_network(pipe : GasPipe):
-	var adj_networks := get_adjacent_networks(pipe.tile)
+	var adj_networks := get_adjacent_networks(pipe)
 	var tile_object : GasObject = network_objects.get(pipe.tile)
 	
 	match adj_networks.size():
@@ -45,7 +45,7 @@ func insert_pipe_to_local_network(pipe : GasPipe):
 		tile_object.is_tile_input(pipe.tile))
 
 func remove_pipe_from_network(pipe : GasPipe):
-	var adj_pipes := get_adjacent_pipes(pipe.tile)
+	var adj_pipes := get_connected_pipes(pipe)
 	var tile_object : GasObject = network_objects.get(pipe.tile)
 	
 	##remove_pipe may change pipe.network_id, so keep the original
@@ -119,7 +119,7 @@ func disconnect_network(main : Vector2i, net_id : int, start : GasPipe):
 		var path : GasPipe = search[i]
 		i += 1
 		
-		for pipe : GasPipe in get_adjacent_pipes(path.tile):
+		for pipe : GasPipe in get_connected_pipes(path):
 			if seen.has(pipe): continue
 			
 			##still connected to main, nothing to split off
@@ -136,64 +136,76 @@ func disconnect_network(main : Vector2i, net_id : int, start : GasPipe):
 	if new_network == null:
 		new_network = create_network()
 	
+	var old_network : GasNetwork = networks[net_id]
 	for pipe in search:
-		new_network.add_pipe(pipe)
+		old_network.remove_pipe(pipe)   # drops it from pipes and active_pipes
+		new_network.add_pipe(pipe)      # sets the id, re-activates if it has contents
+		
+		var in_obj : GasObject = old_network.object_input.get(pipe.tile)
+		if in_obj:
+			old_network.remove_object(pipe.tile, true)
+			new_network.add_object(in_obj, pipe.tile, true)
+		
+		var out_obj : GasObject = old_network.object_output.get(pipe.tile)
+		if out_obj:
+			old_network.remove_object(pipe.tile, false)
+			new_network.add_object(out_obj, pipe.tile, false)
 
-func get_adjacent_networks(tile : Vector2i) -> Array[GasNetwork]:
+func get_adjacent_networks(pipe : GasPipe) -> Array[GasNetwork]:
 	var adj_networks : Array[GasNetwork] = []
 	
-	for dir : Vector2i in Utils.TILE_DIR:
-		var pipe : GasPipe = network_pipes.get(tile + dir)
-		if pipe:
-			var p_network : GasNetwork = networks[pipe.network_id]
-			##a network touching on two sides must only be listed once,
-			##otherwise it gets merged and its id freed twice
-			if not adj_networks.has(p_network):
-				adj_networks.append(p_network)
+	for c_pipe : GasPipe in get_connected_pipes(pipe):
+		var n : GasNetwork = networks[c_pipe.network_id]
+		
+		if not adj_networks.has(n):
+			adj_networks.append(n)
 	
 	return adj_networks
 
 ##pipes
 
 func add_pipe_to_tile(tile: Vector2i, rot : int, pipe : GasPipe):
-	##replace cleanly instead of leaving the old pipe inside its network
 	var existing : GasPipe = network_pipes.get(tile)
 	if existing:
 		remove_pipe_from_tile(existing)
 	
 	pipe.tile = tile
-	pipe.restric_connects = Utils.rotation_bit_dir_restrict(rot)
+	pipe_apply_restrict(pipe, Utils.rotation_bit_dir_restrict(rot))
 	
 	network_pipes[tile] = pipe
-	
-	set_pipe_connections(pipe)
 	
 	insert_pipe_to_local_network(pipe)
 
 func remove_pipe_from_tile(pipe : GasPipe):
-	remove_pipe_connections(pipe)
+	var neighbors := get_connected_pipes(pipe)
 	
-	if network_pipes.has(pipe.tile):
-		network_pipes.erase(pipe.tile)
+	remove_pipe_connections(pipe)
+	network_pipes.erase(pipe.tile)
 	
 	remove_pipe_from_network(pipe)
+
+func pipe_apply_restrict(pipe : GasPipe, restrict : int):
+	pipe.restric_connects = restrict
+	remove_pipe_connections(pipe)
+	set_pipe_connections(pipe)
 
 func set_pipe_connections(pipe : GasPipe):
 	
 	for adj_pipe : GasPipe in get_adjacent_pipes(pipe.tile):
-		var c_adj := Utils.get_adjacency_dir(adj_pipe.tile, pipe.tile)
-		var c_pip := Utils.get_adjacency_dir(pipe.tile, adj_pipe.tile)
+		## current_pipe adjacency to adjacent_pipe
+		var adj_dir := Utils.get_adjacency_dir(pipe.tile, adj_pipe.tile)
+		## adjacent_pipe adjacency to current_pipe
+		var cur_dir := Utils.get_adjacency_dir(adj_pipe.tile, pipe.tile)
 		
-		##each pipe is tested against its own side
-		if adj_pipe.restric_connects & c_adj or pipe.restric_connects & c_pip:
+		if not adj_pipe.accessible_from_dir(cur_dir) or not pipe.accessible_from_dir(adj_dir):
 			continue
 		
-		adj_pipe.connections |= c_adj
-		pipe.connections |= c_pip
+		adj_pipe.connections |= cur_dir
+		pipe.connections |= adj_dir
 
 func remove_pipe_connections(pipe : GasPipe):
 	
-	for adj_pipe : GasPipe in get_adjacent_pipes(pipe.tile):
+	for adj_pipe : GasPipe in get_connected_pipes(pipe):
 		adj_pipe.connections &= ~Utils.get_adjacency_dir(adj_pipe.tile, pipe.tile)
 		pipe.connections &= ~Utils.get_adjacency_dir(pipe.tile, adj_pipe.tile)
 
@@ -227,7 +239,7 @@ func get_adjacent_pipes(tile : Vector2i) -> Array[GasPipe]:
 	
 	for dir : Vector2i in Utils.TILE_DIR:
 		var pipe : GasPipe = network_pipes.get(tile + dir)
-		if pipe:
+		if pipe and pipe.accessible_to_tile(tile):
 			pipes.append(pipe)
 	
 	return pipes
@@ -236,11 +248,23 @@ func get_adjacent_pipes_dir(tile : Vector2i) -> int:
 	var bit_dir : int = 0
 	
 	for dir : Vector2i in Utils.TILE_DIR:
+		if dir == Vector2i.ZERO: continue
+		
 		var pipe : GasPipe = network_pipes.get(tile + dir)
-		if pipe:
+		if pipe and pipe.accessible_to_tile(tile):
 			bit_dir |= Utils.get_adjacency_dir(tile, pipe.tile)
 	
 	return bit_dir
+
+func get_connected_pipes(pipe : GasPipe) -> Array[GasPipe]:
+	var pipes : Array[GasPipe] = []
+	for dir : int in Utils.DIR_BIT.values():
+		if dir == Utils.DIR_BIT.NONE or (pipe.restric_connects & dir): continue
+		
+		var c_pipe : GasPipe = network_pipes.get(pipe.tile + Utils.b_dir_to_t_dir(dir))
+		if c_pipe:
+			pipes.append(c_pipe)
+	return pipes
 
 ##debug
 

@@ -41,6 +41,14 @@ func can_branch() -> bool:
 	
 	return branches != 0
 
+func accessible_to_tile(t : Vector2i) -> bool:
+	var adj := Utils.get_adjacency_dir(tile, t)
+	if adj == Utils.DIR_BIT.NONE: return false
+	return not (restric_connects & adj)
+
+func accessible_from_dir(dir : Utils.DIR_BIT) -> bool:
+	return not (restric_connects & dir)
+
 func get_left_branch() -> Utils.DIR_BIT:
 	var dir := Utils.DIR_BIT.NONE
 	

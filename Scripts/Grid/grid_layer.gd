@@ -1,6 +1,5 @@
 class_name GridLayer
-
-extends RefCounted
+extends Node2D
 
 var layer : GridUtils.Layer
 

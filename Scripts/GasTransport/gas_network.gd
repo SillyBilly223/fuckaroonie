@@ -37,8 +37,6 @@ func add_pipe(pipe : GasPipe):
 		set_active_pipe(pipe)
 
 func remove_pipe(pipe : GasPipe):
-	pipe.network_id = network_id
-	
 	if pipes.has(pipe.tile):
 		
 		pipes.erase(pipe.tile)
@@ -56,16 +54,11 @@ func combine_network(a_network : GasNetwork):
 	for pipe : GasPipe in a_network.pipes.values():
 		pipe.network_id = network_id
 	
-	self.active_pipes + a_network.active_pipes
+	self.active_pipes.append_array(a_network.active_pipes)
 	
 	self.pipes.merge(a_network.pipes)
 	self.object_input.merge(a_network.object_input)
 	self.object_output.merge(a_network.object_output)
-
-func remove_network(a_network : GasNetwork):
-	
-	for pipe in a_network.pipes.keys():
-		pipes.erase(pipe)
 
 ## Simulate
 

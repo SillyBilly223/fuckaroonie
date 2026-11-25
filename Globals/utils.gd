@@ -35,14 +35,13 @@ static func is_opposing_dir(a : DIR_BIT, b : DIR_BIT) -> bool:
 	return flip_bit_dir(a) == b
 
 static func is_ahead(dir : DIR_BIT, a : Vector2i, b : Vector2i) -> bool:
-	var dir_vec := bit_dir_to_tile_dir(dir)
+	var dir_vec := b_dir_to_t_dir(dir)
 	a *= dir_vec; b *= dir_vec
 	
 	return a.x > b.x or a.y > b.y
 
 static func is_pushing(dir : DIR_BIT, a : Vector2i, b : Vector2i) -> bool:
 	var adj_dir = get_adjacency_dir(a,b)
-	print("dir:",bit_dir_to_debug(dir),"adj_dir",bit_dir_to_debug(adj_dir))
 	return adj_dir == dir
 
 static func rotation_bit_dir_restrict(rotation : int) -> int:
@@ -58,7 +57,7 @@ static func rotation_bit_dir_restrict(rotation : int) -> int:
 		_:
 			return Utils.DIR_BIT.NONE
 
-static func bit_dir_to_tile_dir(dir : DIR_BIT) -> Vector2i:
+static func b_dir_to_t_dir(dir : DIR_BIT) -> Vector2i:
 	match dir:
 		DIR_BIT.LEFT:
 			return Vector2i.LEFT
@@ -70,6 +69,19 @@ static func bit_dir_to_tile_dir(dir : DIR_BIT) -> Vector2i:
 			return Vector2i.DOWN
 		_:
 			return Vector2i.ZERO
+
+static func t_dir_to_b_dir(dir : Vector2i) -> DIR_BIT:
+	match dir:
+		Vector2i.LEFT:
+			return DIR_BIT.LEFT
+		Vector2i.UP:
+			return DIR_BIT.UP
+		Vector2i.RIGHT:
+			return DIR_BIT.RIGHT
+		Vector2i.DOWN:
+			return DIR_BIT.DOWN
+		_:
+			return DIR_BIT.NONE
 
 static func flip_bit_dir(dir : DIR_BIT) -> DIR_BIT:
 	match dir:
@@ -84,7 +96,7 @@ static func flip_bit_dir(dir : DIR_BIT) -> DIR_BIT:
 		_:
 			return DIR_BIT.NONE
 
-static func bit_dir_to_debug(dir : DIR_BIT) -> String:
+static func debug_b_dir(dir : DIR_BIT) -> String:
 	match dir:
 		DIR_BIT.LEFT:
 			return "<"

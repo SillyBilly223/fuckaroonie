@@ -144,11 +144,8 @@ static func simulate_pipe(network : GasNetwork, pipe : GasPipe):
 
 static func simulate_split_pipe(network : GasNetwork, head : GasPipe, 
 head_conts : GasContent, split : GasPipe):
-	print("epic split")
 	var set_split_dir = split_progress_path(head, split)
-	print("epic split: ", Utils.bit_dir_to_debug(set_split_dir))
 	if Utils.is_pushing(split.travel_direction, split.tile, head.tile):
-		print("ok?")
 		set_split_dir = pipe_to_pipe_push(network, head, split, set_split_dir)
 	
 	container_to_pipe_transfer(head_conts, split, set_split_dir)
@@ -238,7 +235,7 @@ travel_dir : Utils.DIR_BIT) -> bool:
 		return true
 
 static func get_foward_pipe(network : GasNetwork, pipe : GasPipe) -> GasPipe:
-	var travel_dir := Utils.bit_dir_to_tile_dir(pipe.travel_direction)
+	var travel_dir := Utils.b_dir_to_t_dir(pipe.travel_direction)
 	return network.pipes.get(pipe.tile + travel_dir)
 
 static func get_branch_obstruction(network : GasNetwork, 
@@ -293,7 +290,7 @@ static func group_network_actives(network : GasNetwork) -> Array[Array]:
 static func get_active_section(network : GasNetwork, pipe : GasPipe) -> Array[GasPipe]:
 	var head_pipe := get_head_of_flow(network, pipe)
 	var travel_dir := Utils.flip_bit_dir(pipe.travel_direction)
-	var tile_dir := Utils.bit_dir_to_tile_dir(travel_dir)
+	var tile_dir := Utils.b_dir_to_t_dir(travel_dir)
 	
 	var group : Array[GasPipe] = [head_pipe]
 	var current_pipe := head_pipe
@@ -326,7 +323,7 @@ static func pipe_total_section_weight(network : GasNetwork, head_pipe : GasPipe)
 	if not head_pipe.contents: return 0
 	
 	var travel_dir := Utils.flip_bit_dir(head_pipe.travel_direction)
-	var tile_dir := Utils.bit_dir_to_tile_dir(travel_dir)
+	var tile_dir := Utils.b_dir_to_t_dir(travel_dir)
 	
 	var visited : Array[GasPipe] = [head_pipe]
 	var current_pipe := head_pipe
@@ -351,7 +348,7 @@ static func pipe_total_section_weight(network : GasNetwork, head_pipe : GasPipe)
 	return total
 
 static func get_head_of_flow(network : GasNetwork, pipe : GasPipe) -> GasPipe:
-	var tile_dir := Utils.bit_dir_to_tile_dir(pipe.travel_direction)
+	var tile_dir := Utils.b_dir_to_t_dir(pipe.travel_direction)
 	var current_pipe := pipe
 	var visited : Array[GasPipe] = [pipe]
 	
@@ -376,7 +373,7 @@ direction : Utils.DIR_BIT) -> GasPipe:
 	if direction == Utils.DIR_BIT.NONE:
 		return null
 	
-	var travel_dir := Utils.bit_dir_to_tile_dir(direction)
+	var travel_dir := Utils.b_dir_to_t_dir(direction)
 	return network.pipes.get(pipe.tile + travel_dir, null)
 
 static func split_progress_path(org_pipe : GasPipe, spl_pipe : GasPipe):
